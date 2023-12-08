@@ -1,0 +1,572 @@
+#root {
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+}
+
+.player-name-div {
+  font-size: 2em;
+  padding-left: 0.5em;
+  border-radius: 10px;
+  padding-right: 0.5em;
+}
+
+.hero-player-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+}
+
+.alert-div {
+  font-size: 2em;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.hero-hand-div {
+  width: 95%;
+  height: fit-content;
+  justify-content: center;
+  margin-top: 1em;
+  padding-left: 10em;
+  padding-right: 10em;
+}
+
+.hand-div {
+  height: fit-content;
+  justify-content: center;
+  padding-top: 2em;
+  padding-bottom: 2cqb;
+  padding-left: 10em;
+  padding-right: 10em;
+}
+
+.hundred-percent-div {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-player-state-div {
+  width: 100%;
+  height: 100%;
+}
+
+.ally-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 2em;
+  width: 100%;
+  height: fit-content;
+}
+
+.opponents-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+  width: 100%;
+  height: 60%;
+}
+
+.trick-spacer-div {
+  width: 8em;
+}
+
+.top-trick-card-div {
+  margin-bottom: -4em;
+  flex-direction: column;
+  height: fit-content;
+}
+
+.middle-trick-card-div {
+  margin-bottom: -4em;
+  flex-direction: row;
+}
+
+.opponent-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  align-content: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.right-opponent-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+  width: 40vh;
+  height: 25vh;
+}
+
+.vertical-div {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.full-screen-div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.horizontal-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+}
+
+.loading-div {
+  padding-right: 1em;
+  padding-left: 0.3em;
+  font-size: 3em;
+}
+
+.entry-title-div {
+  font-size: 3em;
+  margin-bottom: 0.2em;
+}
+
+.entry-div {
+  font-size: 1.5em;
+  border-radius: 0.4em;
+  padding: 2em;
+  padding-left: 3em;
+  padding-right: 3em;
+  margin-bottom: 4em;
+}
+
+.entry-input {
+    margin: 0.4em;
+    padding: 1em;
+    width: 13em;
+    height: 2.2em;
+}
+
+.entry-button {
+    margin: 0.4em;
+    padding: 10px;
+    width: 10em;
+    height: 2.5em;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: space-evenly;
+    flex-direction: row;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  display: flex;
+  background: linear-gradient(to right, #ffffff, #eeeedd);
+}
+
+.large-card {
+  height: 15em;
+  border-radius: 1.5em;
+  border: 0.2em solid black;
+  padding-left: 1.8em;
+  padding-right: 1.1em;
+  padding-top: 1em;
+  padding-bottom: 1em;
+  aspect-ratio: 2.5 / 3.5;
+}
+
+.trick-card-div {
+  height: 10em;
+  aspect-ratio: 2.5 / 3.5;
+}
+
+.small-card {
+  height: 10em;
+  border-radius: 1em;
+  border: 0.13em solid black;
+  padding-left: 1.0em;
+  padding-right: 0.25em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  aspect-ratio: 2.5 / 3.5;
+}
+
+.card-black {
+  color: black;
+}
+
+.card-red {
+  color: red;
+}
+
+.card-value-large {
+  font-size: 1.8em !important;
+}
+
+.card-suit-large {
+  font-size: 2.5em !important;
+}
+
+.card-value-small {
+  font-size: 1.2em !important;
+}
+
+.card-suit-small {
+  font-size: 1.5em !important;
+}
+
+.card-left-margin-large {
+  margin-left: -6em;
+}
+
+.card-left-margin-small {
+  margin-left: -3em;
+}
+
+.card-top-margin-large {
+  margin-top: -3em;
+}
+
+.loading-div {
+  border-radius: 0.4em;
+  padding-right: 1em;
+  padding-left: 0.3em;
+  font-size: 3em;
+}
+
+.loading-paragraph {
+  padding-top: 0.2em;
+}
+
+.card-tl {
+  display: flex;
+  flex-grow: 1;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+}
+
+.card-br {
+  display: flex;
+  flex-grow: 1;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items:  flex-start;
+  margin-right: 16px;
+  transform:rotate(-180deg);
+}
+
+.game-div {
+  height: 98%;
+  width: 100%;
+}
+
+.score-log-pane {
+  background-color: #222222DD !important;
+  z-index: 100;
+}
+
+.score-log-overlay {
+  z-index: 100;
+}
+
+.players-div {
+  height: 95%;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+}
+
+.horizontal-game-div {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+}
+
+.game-log-div {
+  width: fit-content;
+  height: fit-content;
+  border-radius: 10px;
+  padding: 3em;
+  align-items: start;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+}
+
+.close-log-button-div {
+  font-size: 1em;
+  width: 100%;
+  justify-content: end;
+  display: flex;
+}
+
+.score-log-column-div {
+  margin-left: 20px;
+  margin-right: 20px;
+  font-size: 1.5em;
+  align-items: top;
+  height: 100%;
+  flex-direction: column;
+  border-radius: 10px;
+}
+
+.score-log-item-div {
+  font-size: 1em;
+}
+
+.slide-pane__content {
+  padding: 0.4em !important;
+}
+
+.score-header-div {
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 3.5em;
+}
+
+.show-log-button-div {
+  font-size: 1em;
+  padding-left: 0.4em;
+  margin-right: 1em;
+}
+
+.leave-game-button {
+  font-size: 1em;
+  padding-left: 0.4em;
+  margin-right: 1em;
+}
+
+.game-score-div {
+  font-size: 0.8em;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.score-sum-div {
+  font-size: 1.5em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  width: fit-content;
+}
+
+.score-bid-column-div {
+  margin-left: 1em;
+  margin-right: 1em;
+  display: flex;
+  align-items: top;
+  text-align: center;
+  height: 100%;
+  flex-direction: column;
+  margin-top: 5.6em;
+}
+
+.score-bid-row-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+  margin-bottom: 2.1em;
+  padding-left: 1em;
+  border-radius: 0.6em;
+  padding-right: 1em;
+  background-color: #ffffff44;
+}
+
+.trump-indicator-value-div {
+  font-size: 1.3em;
+}
+
+.trump-indicator-suit-div {
+  font-size: 1.5em;
+}
+
+.trump-indicator-div {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+  padding-left: 1em;
+  border-radius: 0.6em;
+  padding-right: 1em;
+  background-color: #ffffff44;
+}
+
+.trump-bid-result-div {
+  font-size: 3em;
+}
+
+.number-bid-result-div {
+  font-size: 2em;
+}
+
+.swap-player-button {
+  font-size: 1.2em;
+  padding: 0.2em;
+  padding-left: 0.4em;
+  padding-right: 0.4em;
+}
+
+.team-name-div {
+  font-size: 1.5em;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  flex-direction: row;
+  padding-bottom: 0.1em;
+  padding-left: 0.5em;
+  border-radius: 0.3em;
+  padding-right: 0.5em;
+  width: fit-content;
+}
+
+.message-div {
+  font-size: 1.7em;
+  width: 12em;
+}
+
+.blue-team-div {
+  background: #2255ff66 !important;
+}
+
+.highlight-player {
+  border: 0.15em solid #84c3ff;
+}
+
+.green-team-div {
+  background: #22ff5533 !important;
+}
+
+.error-div {
+  background: #662222FF !important;
+}
+
+.hero-ready-box {
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  font-size: 2em;
+  border-radius: 10px;
+}
+
+.bidding-div {
+  font-size: 1em;
+}
+
+.checkbox {
+  margin-top: 0.15em;
+  width: 1em;
+  height: 1em;
+}
+
+.player-checkbox {
+  width: 2em;
+  height: 2em;
+}
+
+.trump-dropdown {
+  background-color: #111111 !important;
+  color: white;
+}
+
+.react-numeric-input {
+  font-size: 1.5em;
+}
+
+.enter-bid-div {
+  font-size: 1.5em;
+}
+
+.last-bid-div {
+  padding-left: 1em;
+  font-size: 1.5em;
+}
+
+.dropdown-menu {
+  font-size: 3em;
+  width: 100%;
+  text-align: center;
+  background-color: #242424;
+}
+
+.dropdown-item {
+  color: white;
+  padding-right: 1em;
+}
+
+.dropdown-item:hover {
+  color: white;
+  background-color: #353535;
+}
+
+.dropdown-toggle {
+  font-size: 2.5em;
+  border-radius: 10px;
+  padding: 0.25em;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+span {
+  width: 3.5em;
+}
+
+input {
+  width: 3.5em;
+}
+
+.read-the-docs {
+  color: #888;
+}
