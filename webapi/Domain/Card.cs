@@ -17,5 +17,6 @@ namespace webapi.Domain
         }
 
         public TrickCard ToTrickCard() => new(0, Suit, Rank, 4);
+
     }
 }

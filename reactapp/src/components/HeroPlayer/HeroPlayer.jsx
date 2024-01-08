@@ -7,6 +7,7 @@ import Hand from './Hand/Hand';
 import { useSelector } from 'react-redux';
 import PlayCardButton from './PlayCardButton/PlayCardButton';
 import CollectTrickButton from './PlayCardButton/CollectTrickButton';
+import DiscardButton from './PlayCardButton/DiscardButton';
 
 export default function HeroPlayer() {
     const name = useSelector((state) => state.appState.playerName)
@@ -15,9 +16,10 @@ export default function HeroPlayer() {
     const showBiddingBox = useSelector((state) => state.playerState.showBiddingBox)
     const showTrumpSelection = useSelector((state) => state.playerState.showTrumpSelection)
     const showPlayButton = useSelector((state) => state.playerState.showPlayButton)
+    const showDiscardButton = useSelector((state) => state.playerState.showDiscardButton)
     const showCollectButton = useSelector((state) => state.playerState.showCollectButton)
-    const showLastBid = useSelector((state) => state.playerState.showLastBid)
-    const lastBid = useSelector((state) => state.playerState.lastBid)
+    const showPassed = useSelector((state) => state.playerState.showPassed)
+    const showIsDealer = useSelector((state) => state.playerState.showIsDealer)
     const teamIndex = useSelector((state) => state.playerState.teamIndex)
     const highlightMyself = useSelector((state) => state.playerState.highlightPlayer)
 
@@ -31,7 +33,8 @@ export default function HeroPlayer() {
                         <div className={highlightClassName + " player-name-div mb-2 " + ((teamIndex == 0) ? 'blue-team-div' : 'green-team-div')}>
                             {name || "Waiting for player"}
                         </div>
-                        { showLastBid ? <div className="last-bid-div">{"Last bid: " + (lastBid == -1 ? "Passed" : lastBid)}</div> : null }
+                        { showIsDealer ? <div className="last-bid-div me-2">Dealer</div> : null }
+                        { showPassed ? <div className="last-bid-div">Passed</div> : null }
                         { showReady ? <ReadyBox /> : null }
                      </div>
 
@@ -39,6 +42,7 @@ export default function HeroPlayer() {
                     { showTrumpSelection ? <TrumpSelectionBox /> : null }
                     { <Hand/> }
                     { showPlayButton ? <PlayCardButton/> : null }
+                    { showDiscardButton ? <DiscardButton/> : null }
                     { showCollectButton ? <CollectTrickButton /> : null }
                 </div>
             : null}

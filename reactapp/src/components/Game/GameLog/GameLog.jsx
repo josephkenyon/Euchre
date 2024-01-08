@@ -27,13 +27,12 @@ export default function ScoreLog() {
                     <hr className="solid"></hr>
                     {teamOneScoreLog.map(score => 
                         <div key={score} className='score-log-item-div'>
-                            {`${index > 1 ? ((+score) >= 0 ? "+" : "") : ""}${score}`}
-                            { index++ % 2 == 0 ? <hr className="solid"></hr> : null }
+                            {`${index++ > 1 ? ("+ ") : ""}${score}`}
+                            <hr className="solid"></hr>
                         </div>
                     )}
 
                     {teamOneScoreLog.length > 1 ? <div className='score-log-item-div'>
-                        { index % 2 == 0 ? <hr className="solid"></hr> : null }
                         {`${scoreSum1}`}
                     </div> : null}
                 </div>
@@ -43,11 +42,9 @@ export default function ScoreLog() {
         return <div className='score-bid-column-div'>
                     {roundBidResults.map(result =>
                         <div key={result} className={'score-bid-row-div ' + (result.teamIndex == 0 ? "blue-team-div" : "green-team-div")}>
-                            {result.teamIndex == 0 ? <div className='number-bid-result-div'> {result.bid} </div> : null}
                             <div className={"trump-bid-result-div " + ((result.trumpSuit == 0 || result.trumpSuit == 2) ? 'card-black' : 'card-red')}>
                                 {`${suits[result.trumpSuit]}`}
                             </div>
-                            {result.teamIndex == 1 ? <div className='number-bid-result-div'> {result.bid} </div> : null}
                         </div>
                     )}
                 </div>
@@ -63,13 +60,12 @@ export default function ScoreLog() {
                     <hr className="solid"></hr>
                     {teamTwoScoreLog.map(score => 
                         <div key={score} className='score-log-item-div'>
-                            {`${index > 1 ? ((+score) >= 0 ? "+" : "") : ""}${score}`}
-                            { index++ % 2 == 0 ? <hr className="solid"></hr> : null }
+                            {`${index++ > 1 ? ("+") : ""}${score}`}
+                            <hr className="solid"></hr>
                         </div>
                     )}
 
                     {teamTwoScoreLog.length > 1 ? <div className='score-log-item-div'>
-                        { index % 2 == 0 ? <hr className="solid"></hr> : null }
                         {`${scoreSum2}`}
                     </div> : null}
                 </div>

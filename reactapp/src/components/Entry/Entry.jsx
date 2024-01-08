@@ -2,9 +2,8 @@ import '../../App.css'
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setConnection, setGameName, setPlayerName } from '../../slices/appState/appStateSlice';
-import { setAllyState, setCurrentBid, setDisplayedCards, setHand, setHasState, setHighlightPlayer, setIsReady, setLastBid, setLeftOpponentState, setRightOpponentState, setRoundBidResults, setShowBiddingBox,
-    setShowCollectButton,
-    setShowLastBid, setShowPlayButton, setShowReady, setShowSwapPosition, setShowTricksTaken, setShowTrumpIndicator, setShowTrumpSelection, setTeamIndex, setTeamOneName, setTeamOneScoreLog, setTeamOneTricksTaken, setTeamTwoName, setTeamTwoScoreLog, setTeamTwoTricksTaken, setTrickState } from '../../slices/playerState/playerStateSlice';
+import { setAllyState, setCurrentBid, setHand, setHasState, setHighlightPlayer, setIsReady, setLeftOpponentState, setRightOpponentState, setRoundBidResults, setShowBiddingBox, setShowPickItUp, setTrumpCard, setShowGoingUnder, setShowCollectButton,
+    setShowPassed, setShowIsDealer, setShowDiscardButton, setShowPlayButton, setShowPassButton, setShowReady, setShowSwapPosition, setShowTricksTaken, setShowTrumpIndicator, setShowTrumpSelection, setTeamIndex, setTeamOneName, setTeamOneScoreLog, setTeamOneTricksTaken, setTeamTwoName, setTeamTwoScoreLog, setTeamTwoTricksTaken, setTrickState } from '../../slices/playerState/playerStateSlice';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import ConnectionService from '../../services/connectionService';
 import { toast } from 'react-toastify';
@@ -27,15 +26,12 @@ export default function Entry() {
             setSubmitting(true)
 
             connection = new HubConnectionBuilder()
-                .withUrl("https://www.playpinochle.games:7177/hub")
+                .withUrl("https://www.kenyonapps.com:7178/euchre/hub")
                 .configureLogging(LogLevel.Information)
                 .build();
         } catch (err) {
             console.error(err)
-            sendMessage(err.toString())
-            console.log(err)
-        } finally {
-            setSubmitting(false)
+            sendMessage(err.toString(), 2)
         }
 
         connection.on("ErrorMessage", (message) => {
@@ -54,24 +50,28 @@ export default function Entry() {
             dispatch(setTeamTwoScoreLog(newState.teamTwoScoreList))
             dispatch(setRoundBidResults(newState.roundBidResults))
             dispatch(setTeamIndex(newState.teamIndex))
-            dispatch(setLastBid(newState.lastBid))
             dispatch(setCurrentBid(newState.currentBid))
             dispatch(setHighlightPlayer(newState.highlightPlayer))
             dispatch(setIsReady(newState.isReady))
             dispatch(setHasState(true))
             dispatch(setShowReady(newState.showReady))
             dispatch(setShowSwapPosition(newState.showSwapPosition))
-            dispatch(setShowLastBid(newState.showLastBid))
+            dispatch(setShowPassed(newState.showPassed))
+            dispatch(setShowIsDealer(newState.isDealer))
             dispatch(setShowBiddingBox(newState.showBiddingBox))
+            dispatch(setShowPickItUp(newState.showPickItUp))
+            dispatch(setTrumpCard(newState.trumpCard))
+            dispatch(setShowGoingUnder(newState.showGoingUnder))
             dispatch(setShowTrumpSelection(newState.showTrumpSelection))
             dispatch(setShowTrumpIndicator(newState.showTrumpIndicator))
             dispatch(setShowTricksTaken(newState.showTricksTaken))
             dispatch(setTeamOneTricksTaken(newState.teamOneTricksTaken))
             dispatch(setTeamTwoTricksTaken(newState.teamTwoTricksTaken))
             dispatch(setShowPlayButton(newState.showPlayButton))
+            dispatch(setShowPassButton(newState.showPassButton))
+            dispatch(setShowDiscardButton(newState.showDiscard))
             dispatch(setShowCollectButton(newState.showCollectButton))
             dispatch(setHand(newState.hand))
-            dispatch(setDisplayedCards(newState.displayedCards))
             dispatch(setTrickState(newState.trickState))
             dispatch(setAllyState(newState.allyState))
             dispatch(setLeftOpponentState(newState.leftOpponentState))
@@ -79,27 +79,38 @@ export default function Entry() {
         })
 
         connection.onclose(_ => {
-            ConnectionService.setConnection(null)
-            
-            dispatch(setConnection(false))
-            dispatch(setHasState(false))
+            dumpConnection()
         })
 
         try {
             await connection.start()
         } catch (e) {
             console.error("Unable to connect to the server.")
+            dumpConnection()
+            setSubmitting(false)
+            sendMessage(e.toString(), 2)
             return;
         }
 
-        ConnectionService.setConnection(connection)
-        dispatch(setConnection(true))
-
         try {
             await connection.invoke("JoinGame", { GameName: gameName, PlayerName: playerName })
+
+            ConnectionService.setConnection(connection)
+            dispatch(setConnection(true))
         } catch (e) {
             console.error("An error occurred trying to join the game.")
+            
+            dumpConnection()
         }
+
+        setSubmitting(false)
+    }
+
+    function dumpConnection() {
+        ConnectionService.setConnection(null)
+            
+        dispatch(setConnection(false))
+        dispatch(setHasState(false))
     }
 
     function sendMessage(message, code) {

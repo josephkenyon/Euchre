@@ -31,9 +31,9 @@ namespace webapi.Hubs
             }
         }
 
-        public async Task Bid(int bid, bool alone)
+        public async Task Bid(int bid, bool alone, string goingUnderCardsIds)
         {
-            await _gameHubController.OnBid(Context.ConnectionId, bid, alone);
+            await _gameHubController.OnBid(Context.ConnectionId, bid, alone, goingUnderCardsIds);
         }
 
         public async Task DeclareTrump(int trumpSuitIndex, bool alone)
@@ -59,6 +59,21 @@ namespace webapi.Hubs
         public async Task PlayCard(int sentCardId)
         {
             await _gameHubController.PlayCard(Context.ConnectionId, sentCardId);
+        }
+
+        public async Task DiscardCard(int sentCardId)
+        {
+            await _gameHubController.DiscardCard(Context.ConnectionId, sentCardId);
+        }
+
+        public async Task ErrorMessage(string message)
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("SendMessage", new { content = message, code = Enums.MessageCode.Error });
+        }
+
+        public async Task DoubleClickCard(int sentCardId)
+        {
+            await _gameHubController.DoubleClickCard(Context.ConnectionId, sentCardId);
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)

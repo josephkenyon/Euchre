@@ -133,7 +133,7 @@ namespace webapi.Controllers.GameHub
             await _playerConnectionController.UpdateClients(playerDetails);
         }
 
-        public async Task OnBid(string connectionId, int bid, bool alone)
+        public async Task OnBid(string connectionId, int bid, bool alone, string goingUnderCardsIds)
         {
             var playerDetails = GetVerifiedPlayerDetails(connectionId);
 
@@ -158,21 +158,32 @@ namespace webapi.Controllers.GameHub
                 return;
             }
 
-            var currentBid = game.GetCurrentBid();
-            var bidIsPass = bid == -1;
+            var bidIsPass = bid < 0;
             var bidIsGoingUnder = bid == -2;
             var pickItUp = bid == 1;
 
             var teamIndex = biddingPlayer.GetTeamIndex();
             if (bidIsPass)
             {
-                await _playerConnectionController.MessageClients(playerDetails, $"{playerName} has passed!", teamIndex);
+                if (bidIsGoingUnder)
+                {
+                    await _playerConnectionController.MessageClients(playerDetails, $"{playerName} went under.", teamIndex);
+                    biddingPlayer.GoUnder(game.GetAndThenReplenishKitty(goingUnderCardsIds), goingUnderCardsIds);
+                }
+                else
+                {
+                    await _playerConnectionController.MessageClients(playerDetails, $"{playerName} has passed!", teamIndex);
+                }
+
+                biddingPlayer.Pass();
 
                 if (game.GetPlayerTurnIndex() == game.GetDealerIndex())
                 {
                     if (phase == Phase.Pick_It_Up)
                     {
                         game.IncrementPhase();
+                        game.FlipDealerCard();
+                        _playerController.ResetBidState(playerDetails);
                     }
                 }
 
@@ -190,33 +201,23 @@ namespace webapi.Controllers.GameHub
                     await _playerConnectionController.MessageClients(playerDetails, $"{playerName} says 'Pick it up'!", teamIndex);
                 }
 
+                var trumpSuit = game.GetTrumpCard()!.Suit;
+                await _playerConnectionController.MessageClients(playerDetails, $"Trump is {trumpSuit}s!", teamIndex);
+
+                game.SetTookBidTeamIndex(teamIndex);
+                game.AddRoundBidResult(trumpSuit, teamIndex);
+
                 game.SkipPhase();
-
-                phase = game.GetPhase();
-                if (phase == Phase.Discard)
-                {
-                    var dealerIndex = game.GetDealerIndex();
-                    game.SetPlayerTurnIndex(dealerIndex);
-
-                    var dealer = players.Single(player => player.GetIndex() == dealerIndex);
-
-                    dealer.DealCard(game.GetTrumpCard());
-
-                    _playerController.UpdatePlayers(playerDetails, players);
-                }
-
-
-                var newPlayerTurnIndex = unPassedPlayers.Single().GetIndex();
-                game.SetPlayerTurnIndex(newPlayerTurnIndex);
-
-                var newTeamIndex = (newPlayerTurnIndex == 0 || newPlayerTurnIndex == 2) ? 0 : 1;
-                game.SetTookBidTeamIndex(newTeamIndex);
-
-                var newPlayerName = unPassedPlayers.Single().GetName();
-                await _playerConnectionController.MessageClients(playerDetails, $"{newPlayerName} has won the bid and is declaring trump!", newTeamIndex);
 
                 _playerController.ResetBidState(playerDetails);
 
+                var dealerIndex = game.GetDealerIndex();
+                var dealer = players.Single(player => player.GetIndex() == dealerIndex);
+
+                game.SetPlayerTurnIndex(dealerIndex);
+                dealer.DealCard(game.GetTrumpCard());
+
+                _playerController.UpdatePlayers(playerDetails, players);
             }
 
             _gameController.UpdateGame(playerDetails, game);
@@ -228,41 +229,58 @@ namespace webapi.Controllers.GameHub
         {
             var playerDetails = GetVerifiedPlayerDetails(connectionId);
 
-            var playerName = playerDetails.GetPlayerName();
-
             var game = GetVerifiedGame(playerDetails);
 
+            var playerName = playerDetails.GetPlayerName();
             var playerTurnIndex = game.GetPlayerTurnIndex();
 
             ValidatePhase(playerDetails, game, Phase.Declaring_Trump);
 
             var players = _playerController.GetPlayers(playerDetails);
+            var player = players.Single(player => player.GetName() == playerDetails.GetPlayerName());
+            var playerIndex = player.GetIndex();
 
-            if (trumpSuitIndex < 0 || trumpSuitIndex > 3)
-            {
-                await _playerConnectionController.MessageErrorToClient(playerDetails, "Invalid suit.");
-                return;
-            }
-
-            var playerIndex = players.Single(player => player.GetName() == playerDetails.GetPlayerName()).GetIndex();
             if (playerIndex != playerTurnIndex)
             {
                 await _playerConnectionController.MessageErrorToClient(playerDetails, "This player cannot declare trump.");
                 return;
             }
 
-            var trumpSuit = (Suit) trumpSuitIndex;
-            game.SetTrumpSuit(trumpSuit);
-            game.IncrementPhase();
+            var teamIndex = Utils.GetTeamIndex(playerTurnIndex);
 
-            var teamIndex = (playerTurnIndex == 0 || playerTurnIndex == 2) ? 0 : 1;
+            if (trumpSuitIndex == -1)
+            {
+                if (playerIndex == game.GetDealerIndex())
+                {
+                    await _playerConnectionController.MessageErrorToClient(playerDetails, "Dealer cannot pass.");
+                    return;
+                }
 
-            game.AddRoundBidResult(trumpSuit, teamIndex, game.GetCurrentBid());
+                await _playerConnectionController.MessageClients(playerDetails, $"{playerName} has passed!", teamIndex);
+                player.Pass();
+                game.IncrementPlayerTurnIndex();
+            }
+            else
+            {
+                if (trumpSuitIndex < 0 || trumpSuitIndex > 3)
+                {
+                    await _playerConnectionController.MessageErrorToClient(playerDetails, "Invalid suit.");
+                    return;
+                }
 
-            var tookBidTeamIndex = (playerTurnIndex == 0 || playerTurnIndex == 2) ? 0 : 1;
-            game.SetTookBidTeamIndex(tookBidTeamIndex);
+                var trumpSuit = (Suit) trumpSuitIndex;
 
-            await _playerConnectionController.MessageClients(playerDetails, $"Trump is {trumpSuit}s!", teamIndex);
+                game.SetTrumpSuit(trumpSuit);
+                game.SkipPhase();
+
+                _playerController.ResetBidState(playerDetails);
+
+                await _playerConnectionController.MessageClients(playerDetails, $"Trump is {trumpSuit}s!", teamIndex);
+
+                game.AddRoundBidResult(trumpSuit, teamIndex);
+                game.SetTookBidTeamIndex(teamIndex);
+                game.SetPlayerTurnIndex(Utils.IncrementIndex(game.GetDealerIndex()));
+            }
 
             _gameController.UpdateGame(playerDetails, game);
             _playerController.UpdatePlayers(playerDetails, players);
@@ -332,7 +350,7 @@ namespace webapi.Controllers.GameHub
 
             var gameIsPlaying = game.GetPhase() == Phase.Playing;
             if (!gameIsPlaying)
-            {;
+            {
                 await _playerConnectionController.MessageErrorToClient(playerConnectionData, "Game is not currently in a playing phase.");
                 return;
             }
@@ -369,7 +387,7 @@ namespace webapi.Controllers.GameHub
             }
 
             var currentTrick = _trickController.GetTrick(playerConnectionData);
-            if (currentTrick != null && currentTrick.GetCards().Count == 4)
+            if (currentTrick != null && (currentTrick.GetCards().Count == 4 || (currentTrick.GetCards().Count == 3 && game.GetIgnoredPlayerIndex() != null)))
             {
                 await CollectTrick(connectionId, false);
             }
@@ -379,7 +397,7 @@ namespace webapi.Controllers.GameHub
             currentTrick = _trickController.GetTrick(playerConnectionData);
             if (currentTrick == null)
             {
-                _trickController.CreateNewTrick(playerConnectionData, trumpSuit, card.Suit);
+                _trickController.CreateNewTrick(playerConnectionData, (Suit) trumpSuit!, card.Suit);
 
                 currentTrick = _trickController.GetTrick(playerConnectionData) ?? throw new Exception("Created trick was null.");
             }
@@ -388,7 +406,7 @@ namespace webapi.Controllers.GameHub
                 int index = 0;
                 var playedCards = currentTrick.GetCards().Select(card => new TrickCard(card.Id, card.Suit, card.Rank, index++)).ToList();
 
-                var validPlays = Utils.GetValidPlays(playedCards, hand, trumpSuit);
+                var validPlays = Utils.GetValidPlays(playedCards, hand, (Suit) trumpSuit!);
 
                 var canPlayCard = validPlays.Any(c => c.Suit == card.Suit && c.Rank == card.Rank);
 
@@ -412,7 +430,7 @@ namespace webapi.Controllers.GameHub
 
                 await _playerConnectionController.MessageClients(playerConnectionData, message, player.GetTeamIndex());
             }
-            else if (trickPlays.Count == 4)
+            else if (trickPlays.Count == 4 || (trickPlays.Count == 3 && game.GetIgnoredPlayerIndex() != null))
             {
                 int index = 0;
                 var playedCards = currentTrick.GetCards().Select(card => new TrickCard(card.Id, card.Suit, card.Rank, index++)).ToList();
@@ -444,6 +462,67 @@ namespace webapi.Controllers.GameHub
             await _playerConnectionController.UpdateClients(playerConnectionData);
         }
 
+        public async Task DoubleClickCard(string connectionId, int sentCardId)
+        {
+            var playerConnectionData = GetVerifiedPlayerDetails(connectionId);
+
+            var game = GetVerifiedGame(playerConnectionData);
+
+            if (game.GetPhase() == Phase.Playing)
+            {
+                await PlayCard(connectionId, sentCardId);
+            }
+            else if (game.GetPhase() == Phase.Discard)
+            {
+                await DiscardCard(connectionId, sentCardId);
+            }
+        }
+
+
+        public async Task DiscardCard(string connectionId, int sentCardId)
+        {
+            var playerConnectionData = GetVerifiedPlayerDetails(connectionId);
+
+            var game = GetVerifiedGame(playerConnectionData);
+
+            var gameIsPlaying = game.GetPhase() == Phase.Discard;
+            if (!gameIsPlaying)
+            {
+                await _playerConnectionController.MessageErrorToClient(playerConnectionData, "Game is not currently in a discarding phase.");
+                return;
+            }
+
+            var playerTurnIndex = game.GetPlayerTurnIndex();
+
+            var player = GetVerifiedPlayer(playerConnectionData);
+            var playerIndex = player.GetIndex();
+
+            if (playerTurnIndex != playerIndex)
+            {
+                await _playerConnectionController.MessageErrorToClient(playerConnectionData, "Its not your turn.");
+                return;
+            }
+
+            var hand = player.GetHand();
+
+            var card = hand.Where(card => card.Id == sentCardId).FirstOrDefault();
+            if (card == null)
+            {
+                await _playerConnectionController.MessageErrorToClient(playerConnectionData, "You do not have that card to discard.");
+                return;
+            }
+
+            player.RemoveCard(sentCardId);
+            game.IncrementPhase();
+            game.IncrementPlayerTurnIndex();
+
+            _gameController.UpdateGame(playerConnectionData, game);
+            _playerController.UpdatePlayer(playerConnectionData, player);
+
+            await _playerConnectionController.UpdateClients(playerConnectionData);
+        }
+
+
         public async Task CollectTrick(string connectionId, bool updateClients)
         {
             var playerConnectionData = GetVerifiedPlayerDetails(connectionId);
@@ -458,7 +537,7 @@ namespace webapi.Controllers.GameHub
             }
 
             var trickPlays = currentTrick.GetTrickPlays();
-            if (trickPlays.Count != 4)
+            if (trickPlays.Count != 4 || (trickPlays.Count < 3 && game.GetIgnoredPlayerIndex() != null))
             {
                 await _playerConnectionController.MessageErrorToClient(playerConnectionData, "Trick is not complete.");
                 return;
@@ -485,28 +564,28 @@ namespace webapi.Controllers.GameHub
                 var teamOneScore = game.GetTotalScore(0);
                 var teamTwoScore = game.GetTotalScore(1);
 
-                if (tookBidTeamIndex == 0 && teamOneScore > 10)
+                if (tookBidTeamIndex == 0 && teamOneScore >= 10)
                 {
                     game.IncrementPhase();
 
                     var teamName = GetTeamName(playerConnectionData, 0);
                     await _playerConnectionController.MessageClients(playerConnectionData, $"{teamName} win!", tookBidTeamIndex);
                 }
-                else if (tookBidTeamIndex == 1 && teamTwoScore > 10)
+                else if (tookBidTeamIndex == 1 && teamTwoScore >= 10)
                 {
                     game.IncrementPhase();
 
                     var teamName = GetTeamName(playerConnectionData, 1);
                     await _playerConnectionController.MessageClients(playerConnectionData, $"{teamName} win!", tookBidTeamIndex);
                 }
-                else if (teamOneScore < 0 && teamTwoScore > 10)
+                else if (teamOneScore < 0 && teamTwoScore >= 10)
                 {
                     game.IncrementPhase();
 
                     var teamName = GetTeamName(playerConnectionData, 1);
                     await _playerConnectionController.MessageClients(playerConnectionData, $"{teamName} win!", tookBidTeamIndex);
                 }
-                else if (teamTwoScore < 0 && teamOneScore > 10)
+                else if (teamTwoScore < 0 && teamOneScore >= 10)
                 {
                     game.IncrementPhase();
 
@@ -534,65 +613,38 @@ namespace webapi.Controllers.GameHub
 
         private void ProcessRoundEnd(IGame game)
         {
-            var playerTurnIndex = game.GetPlayerTurnIndex();
-            var teamIndex = (playerTurnIndex == 0 || playerTurnIndex == 2) ? 0 : 1;
-
-            var teamOnePoints = game.GetCardIds(0).Select(Utils.GetCardFromId).Where(card => (int)card.Rank < 3).Count();
-            var teamTwoPoints = game.GetCardIds(1).Select(Utils.GetCardFromId).Where(card => (int)card.Rank < 3).Count();
-
-            if (teamIndex == 0)
-            {
-                teamOnePoints += 2;
-            }
-            else
-            {
-                teamTwoPoints += 2;
-            }
-
-            var someoneSet = false;
-
             var gameDetails = game.GetGameDetails();
 
-            var playerNames = _playerController.GetPlayers(gameDetails).Select(player => player.GetName());
-
-            var teamOneName = GetTeamName(gameDetails, 0);
-            var teamTwoName = GetTeamName(gameDetails, 1);
-
-            var currentBid = game.GetCurrentBid();
             var tookBidTeamIndex = game.GetTookBidTeamIndex();
+            var otherTeamIndex = game.GetTookBidTeamIndex() == 0 ? 1 : 0;
 
-            if (tookBidTeamIndex == 0 && (teamOnePoints + game.GetLastMeld(0)) < currentBid)
+            var tookBidTeamName = GetTeamName(gameDetails, tookBidTeamIndex);
+            var tricksTakenByWinningteam = game.GetTricksTaken(tookBidTeamIndex);
+            
+            if (tricksTakenByWinningteam == 5)
             {
-                game.NullifyMeld(0);
-                game.AddScore(0, -currentBid);
+                var scoreAdded = game.TeamWasAlone(tookBidTeamIndex) ? 4 : 2;
 
-                _playerConnectionController.MessageClients(gameDetails, $"{teamOneName} have been set with only {teamOnePoints} points.", 0);
-                someoneSet = true;
+                game.AddScore(tookBidTeamIndex, scoreAdded);
+                game.AddScore(otherTeamIndex, 0);
+
+                _playerConnectionController.MessageClients(gameDetails, $"{tookBidTeamName} took {tricksTakenByWinningteam} tricks and score {scoreAdded} points!", tookBidTeamIndex);
+            }
+            else if (tricksTakenByWinningteam > 2)
+            {
+                game.AddScore(tookBidTeamIndex, 1);
+                game.AddScore(otherTeamIndex, 0);
+                _playerConnectionController.MessageClients(gameDetails, $"{tookBidTeamName} took {tricksTakenByWinningteam} tricks and score 1 point!", tookBidTeamIndex);
             }
             else
             {
-                game.AddScore(0, teamOnePoints);
+                var otherTeamName = GetTeamName(gameDetails, otherTeamIndex);
+                _playerConnectionController.MessageClients(gameDetails, $"{tookBidTeamName} took only {tricksTakenByWinningteam} tricks, so {otherTeamName} score 2 points.", otherTeamIndex);
+
+                game.AddScore(otherTeamIndex, 2);
+                game.AddScore(tookBidTeamIndex, 0);
             }
 
-            if (tookBidTeamIndex == 1 && (teamTwoPoints + game.GetLastMeld(1)) < currentBid)
-            {
-                game.NullifyMeld(1);
-                game.AddScore(1, -currentBid);
-
-                _playerConnectionController.MessageClients(gameDetails, $"{teamTwoName} have been set with only {teamTwoPoints} points.", 1);
-                someoneSet = true;
-            }
-            else
-            {
-                game.AddScore(1, teamTwoPoints);
-            }
-
-            if (!someoneSet)
-            {
-                var teamName = tookBidTeamIndex == 0 ? teamOneName : teamTwoName;
-                var teamPoints = tookBidTeamIndex == 0 ? teamOnePoints : teamTwoPoints;
-                _playerConnectionController.MessageClients(gameDetails, $"{teamName} make their bid with {teamPoints} points!", tookBidTeamIndex);
-            }
         }
     }
 }

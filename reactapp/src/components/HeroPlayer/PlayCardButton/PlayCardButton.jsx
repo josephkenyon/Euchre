@@ -6,11 +6,22 @@ import { selectCard } from '../../../slices/playerState/playerStateSlice';
 
 export default function PlayCardButton() {
     const dispatch = useDispatch()
-    const selectedCardId = useSelector((state) => state.playerState.selectedCardId)
+
+    const hand = useSelector((state) => state.playerState.hand)
+    const selectedCardIds = useSelector((state) => state.playerState.selectedCardIds)
 
     const playCard = async () => {
-        await ConnectionService.getConnection().invoke("PlayCard", selectedCardId)
-        dispatch(selectCard(-1))
+        if (hand.length == 1) {
+            await ConnectionService.getConnection().invoke("PlayCard", hand[0].id)
+            dispatch(selectCard(-1))
+        }
+        else if (selectedCardIds.length != 1) {
+            await ConnectionService.getConnection().invoke("ErrorMessage", "You must select only one card to play.")
+        }
+        else {
+            await ConnectionService.getConnection().invoke("PlayCard", selectedCardIds[0])
+            dispatch(selectCard(-1))
+        }
     }
 
     return (

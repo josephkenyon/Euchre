@@ -2,15 +2,13 @@ import '../../App.css'
 import React from 'react';
 import ReadyBox from './Readybox/ReadyBox';
 import { useSelector } from 'react-redux';
-import DisplayedCards from './DisplayedCards/DisplayedCards';
 import ConnectionService from '../../services/connectionService';
 
 export default function Player({ playerStateName, ally }) {
     const name = useSelector((state) => state.playerState[playerStateName].name)
     const showReady = useSelector((state) => state.playerState[playerStateName].showReady)
-    const showLastBid = useSelector((state) => state.playerState[playerStateName].showLastBid)
-    const lastBid = useSelector((state) => state.playerState[playerStateName].lastBid)
-    const displayedCards = useSelector((state) => state.playerState[playerStateName].displayedCards)
+    const showPassed = useSelector((state) => state.playerState[playerStateName].passed)
+    const showDealer = useSelector((state) => state.playerState[playerStateName].isDealer)
     const teamIndex = useSelector((state) => state.playerState.teamIndex)
     const highlightPlayer = useSelector((state) => state.playerState[playerStateName].highlightPlayer)
     const showSwapPosition = useSelector((state) => state.playerState.showSwapPosition)
@@ -34,9 +32,9 @@ export default function Player({ playerStateName, ally }) {
                     {name || "Waiting for player"}
                 </div>
                 { showReady ? <ReadyBox playerStateName={playerStateName}/> : null }
-                { showLastBid ? <div className="last-bid-div">{"Last bid: " + (lastBid == -1 ? "Passed" : lastBid)}</div> : null }
+                { showDealer ? <div className="last-bid-div me-2">Dealer</div> : null }
+                { showPassed ? <div className="last-bid-div">Passed</div> : null }
             </div>
-            { displayedCards ? <DisplayedCards playerStateName={playerStateName}/> : null }
         </div>
     )
 }

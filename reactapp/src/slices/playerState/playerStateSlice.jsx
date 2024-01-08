@@ -7,17 +7,21 @@ const initialState = {
     teamTwoScoreLog: [],
     roundBidResults: [],
     teamIndex: 0,
-    lastBid: 0,
     currentBid: 0,
     highlightPlayer: false,
     hasState: false,
     alone: false,
     isReady: false,
     showReady: false,
+    showPassed: false,
+    showIsDealer: false,
     showSwapPosition: false,
-    showLastBid: false,
     showBiddingBox: false,
+    showPickItUp: false,
+    showGoingUnder: false,
     showPlayButton: false,
+    showPassButton: false,
+    showDiscardButton: false,
     showCollectButton: false,
     showTrumpSelection: false,
     showTrumpIndicator: false,
@@ -25,9 +29,9 @@ const initialState = {
     teamOneTricksTaken: 0,
     teamTwoTricksTaken: 0,
     hasSelectedCard: false,
-    selectedCardId: -1,
+    selectedCardIds: [],
     hand: [],
-    displayedCards: [],
+    trumpCard: null,
     trickState: {},
     allyState: {},
     leftOpponentState: {},
@@ -56,9 +60,6 @@ export const playerStateSlice = createSlice({
     setTeamIndex: (state, action) => {
         state.teamIndex = action.payload
     },
-    setLastBid: (state, action) => {
-        state.lastBid = action.payload
-    },
     setCurrentBid: (state, action) => {
         state.currentBid = action.payload
     },
@@ -80,11 +81,23 @@ export const playerStateSlice = createSlice({
     setShowSwapPosition: (state, action) => {
         state.showSwapPosition = action.payload
     },
-    setShowLastBid: (state, action) => {
-        state.showLastBid = action.payload
+    setShowPassed: (state, action) => {
+        state.showPassed = action.payload
+    },
+    setShowIsDealer: (state, action) => {
+        state.showIsDealer = action.payload
     },
     setShowBiddingBox: (state, action) => {
         state.showBiddingBox = action.payload
+    },
+    setShowPickItUp: (state, action) => {
+        state.showPickItUp = action.payload
+    },
+    setTrumpCard: (state, action) => {
+        state.trumpCard = action.payload
+    },
+    setShowGoingUnder: (state, action) => {
+        state.showGoingUnder = action.payload
     },
     setShowTrumpSelection: (state, action) => {
         state.showTrumpSelection = action.payload
@@ -104,14 +117,18 @@ export const playerStateSlice = createSlice({
     setShowPlayButton: (state, action) => {
         state.showPlayButton = action.payload
     },
+    setShowPassButton: (state, action) => {
+        state.showPassButton = action.payload
+    },
+    setShowDiscardButton: (state, action) => {
+        state.showDiscardButton = action.payload
+    },
     setShowCollectButton: (state, action) => {
         state.showCollectButton = action.payload
     },
     setHand: (state, action) => {
         state.hand = action.payload
-    },
-    setDisplayedCards: (state, action) => {
-        state.displayedCards = action.payload
+        state.selectedCardIds = []
     },
     setTrickState: (state, action) => {
         state.trickState = action.payload
@@ -128,26 +145,43 @@ export const playerStateSlice = createSlice({
     selectCard: (state, action) => {
         const newHand = state.hand
 
-        state.selectedCardId = -1;
+        state.selectedCardIds = [];
         state.hasSelectedCard = false;
 
-        newHand.forEach(card => {
-            if (card.id == action.payload) {
-                card.selected = !card.selected;
-                state.hasSelectedCard = card.selected;
-                state.selectedCardId = card.selected ? card.id : -1
-            } else {
-                card.selected = false;
-            }
-        });
+        if (state.showGoingUnder) {
+            newHand.forEach(card => {
+                if (card.id == action.payload) {
+                    card.selected = !card.selected;
+                }
+            });
+
+            newHand.forEach(card => {
+                if (card.selected) {
+                    state.selectedCardIds.push(card.id);
+                    state.hasSelectedCard = true;
+                }
+            });
+        } else {
+            newHand.forEach(card => {
+                if (card.id == action.payload) {
+                    card.selected = !card.selected;
+                    state.hasSelectedCard = card.selected;
+                    state.selectedCardIds = [card.selected ? card.id : -1]
+                } else {
+                    card.selected = false;
+                }
+            });
+        }
     
+        state.selectedCardIds = state.selectedCardIds.filter(id => id != -1)
+
         state.hand = newHand
     },
   },
 })
 
-export const { setTeamOneName, setTeamTwoName, setTeamOneScoreLog, setTeamTwoScoreLog, setRoundBidResults, setLastBid, setTeamIndex, setCurrentBid, setHighlightPlayer, setHasState, setAlone, setIsReady,
-    setShowReady, setShowSwapPosition, setShowLastBid, setShowBiddingBox, setShowTrumpSelection, setShowTrumpIndicator, setShowTricksTaken, setTeamOneTricksTaken, setTeamTwoTricksTaken,
-    setHand, setDisplayedCards, setShowPlayButton, setShowCollectButton, setTrickState, setAllyState, setLeftOpponentState, setRightOpponentState, selectCard } = playerStateSlice.actions
+export const { setTeamOneName, setTeamTwoName, setTeamOneScoreLog, setTeamTwoScoreLog, setRoundBidResults, setTeamIndex, setCurrentBid, setHighlightPlayer, setHasState, setAlone, setIsReady,
+    setShowReady, setShowSwapPosition, setShowPassed, setShowIsDealer, setShowBiddingBox, setShowPickItUp, setTrumpCard, setShowGoingUnder, setShowTrumpSelection, setShowTrumpIndicator, setShowTricksTaken, setTeamOneTricksTaken, setTeamTwoTricksTaken,
+    setHand, setShowDiscardButton, setShowPlayButton, setShowPassButton, setShowCollectButton, setTrickState, setAllyState, setLeftOpponentState, setRightOpponentState, selectCard } = playerStateSlice.actions
 
 export default playerStateSlice.reducer

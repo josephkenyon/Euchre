@@ -20,29 +20,40 @@ namespace webapi.Domain.Statics
 
         public static List<Card> GetValidPlays(List<TrickCard> playedCards, List<Card> hand, Suit trumpSuit)
         {
-            var ledSuit = playedCards.OrderBy(card => card.PlayedIndex).First().Suit;
-            var hasSuit = hand.Any(card => card.Suit == ledSuit);
+            var ledTrickCard = playedCards.OrderBy(card => card.PlayedIndex).First();
+
+            var ledSuit = GetFunctionalSuit(new Card(0, ledTrickCard.Suit, ledTrickCard.Rank), trumpSuit);
+            var hasSuit = hand.Any(card => GetFunctionalSuit(card, trumpSuit) == ledSuit);
 
             if (hasSuit)
             {
-                return hand.Where(card => card.Suit == ledSuit).ToList();
+                return hand.Where(card => GetFunctionalSuit(card, trumpSuit) == ledSuit).ToList();
             }
 
             return hand;
         }
 
+        private static Suit GetFunctionalSuit(Card card, Suit trumpSuit)
+        {
+            if (card.Rank != Rank.Jack)
+            {
+                return card.Suit;
+            }
+
+            var littleBoySuit = GetLittleBoySuit(trumpSuit);
+            if (card.Suit == littleBoySuit)
+            {
+                return trumpSuit;
+            }
+
+            return card.Suit;
+        }
+
         public static void StartNewRound(IGame game, IEnumerable<IPlayer> players)
         {
-            DealCards(game, players);
-
             game.StartNewRound();
 
-            var player = players.Single(player => player.GetIndex() == game.GetPlayerTurnIndex());
-
-            foreach (var pl in players)
-            {
-                pl.ResetBiddingState();
-            }
+            DealCards(game, players);
         }
 
         public static void DealCards(IGame game, IEnumerable<IPlayer> players)
@@ -136,6 +147,11 @@ namespace webapi.Domain.Statics
             return cardsList;
         }
 
+        public static int GetTeamIndex(int playerIndex)
+        {
+            return (playerIndex == 0 || playerIndex == 2) ? 0 : 1;
+        }
+
         public static Card GetCardFromString(string cardString)
         {
             var cardStringList = cardString.Split(":");
@@ -164,19 +180,19 @@ namespace webapi.Domain.Statics
             var suitOneValue = GetSuitValue(trumpSuit, ledSuit, card1.Suit);
             var suitTwoValue = GetSuitValue(trumpSuit, ledSuit, card2.Suit);
 
-            if (IsBigBoy(trumpSuit, card1))
+            if (IsBigBoy(trumpSuit, card1.Suit, card1.Rank))
             {
                 return 1;
             }
-            else if (IsBigBoy(trumpSuit, card2))
+            else if (IsBigBoy(trumpSuit, card2.Suit, card2.Rank))
             {
                 return -1;
             }
-            else if (IsLittleBoy(trumpSuit, card1))
+            else if (IsLittleBoy(trumpSuit, card1.Suit, card1.Rank))
             {
                 return 1;
             }
-            else if (IsLittleBoy(trumpSuit, card2))
+            else if (IsLittleBoy(trumpSuit, card2.Suit, card2.Rank))
             {
                 return -1;
             }
@@ -209,14 +225,63 @@ namespace webapi.Domain.Statics
             return card1.PlayedIndex > card2.PlayedIndex ? -1 : 1;
         }
 
-        public static bool IsBigBoy(Suit trumpSuit, TrickCard card)
+        public static int CompareCards(Suit? trumpSuit, Card card1, Card card2)
         {
-            return card.Suit == trumpSuit && card.Rank == Rank.Jack;
+            if (trumpSuit != null && IsBigBoy((Suit) trumpSuit, card1.Suit, card1.Rank))
+            {
+                return 1;
+            }
+            else if (trumpSuit != null && IsBigBoy((Suit) trumpSuit, card2.Suit, card2.Rank))
+            {
+                return -1;
+            }
+            else if (trumpSuit != null && IsLittleBoy((Suit) trumpSuit, card1.Suit, card1.Rank))
+            {
+                return 1;
+            }
+            else if (trumpSuit != null && IsLittleBoy((Suit) trumpSuit, card2.Suit, card2.Rank))
+            {
+                return -1;
+            }
+
+            if (card1.Suit == trumpSuit && card2.Suit != trumpSuit)
+            {
+                return 1;
+            }
+            else if (card2.Suit == trumpSuit && card1.Suit != trumpSuit)
+            {
+                return -1;
+            }
+
+            if (card1.Suit < card2.Suit)
+            {
+                return 1;
+            } 
+            else if (card2.Suit < card1.Suit)
+            {
+                return -1;
+            }
+
+            if (card1.Rank < card2.Rank)
+            {
+                return 1;
+            }
+            else if (card2.Rank < card1.Rank)
+            {
+                return -1;
+            }
+
+            return 0;
         }
 
-        public static bool IsLittleBoy(Suit trumpSuit, TrickCard card)
+        public static bool IsBigBoy(Suit trumpSuit, Suit suit, Rank rank)
         {
-            return card.Suit == GetLittleBoySuit(trumpSuit) && card.Rank == Rank.Jack;
+            return suit == trumpSuit && rank == Rank.Jack;
+        }
+
+        public static bool IsLittleBoy(Suit trumpSuit, Suit suit, Rank rank)
+        {
+            return suit == GetLittleBoySuit(trumpSuit) && rank == Rank.Jack;
         }
 
         public static Suit GetLittleBoySuit(Suit trumpSuit)
@@ -314,8 +379,8 @@ namespace webapi.Domain.Statics
 
         public static Card GetCardFromId(int id)
         {
-            var suit = (Suit)(id / 12);
-            var rank = (Rank)((id - (int)suit * 12) / 2);
+            var suit = (Suit)(id / 6);
+            var rank = (Rank)(id - (int)suit * 6);
 
             return new Card(id, suit, rank);
         }

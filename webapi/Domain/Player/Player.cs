@@ -1,5 +1,6 @@
 ﻿using webapi.Domain.PlayerDetails;
 using webapi.Domain.Statics;
+using static webapi.Domain.Statics.Enums;
 
 namespace webapi.Domain.Player
 {
@@ -40,6 +41,13 @@ namespace webapi.Domain.Player
             return Utils.GetCardsFromString(HandString);
         }
 
+        public void SortHand(Suit? trumpSuit)
+        {
+            var hand = GetHand();
+            hand.Sort((x, y) => Utils.CompareCards(trumpSuit, y, x));
+            HandString = Utils.StringifyCards(hand);
+        }
+
         public void DealCards(List<Card> cards)
         {
             HandString = Utils.StringifyCards(cards);
@@ -69,6 +77,46 @@ namespace webapi.Domain.Player
             cardStringList.Remove(stringToDelete);
 
             HandString = string.Join(";", cardStringList);
+        }
+
+        public void ResetBiddingState()
+        {
+            Passed = false;
+        }
+
+        public void Pass()
+        {
+            Passed = true;
+        }
+
+        public void GoUnder(List<Card> cards, string goingUnderCardsIds)
+        {
+            var idStringList = goingUnderCardsIds.Split(";").ToList();
+            foreach (var idString in idStringList)
+            {
+                RemoveCard(int.Parse(idString));
+            }
+
+            foreach (var card in cards)
+            {
+                DealCard(card);
+            }
+        }
+
+        public bool CanGoUnder()
+        {
+            var hand = GetHand();
+
+            int ninesAndTensCount = 0;
+            foreach (var card in hand)
+            {
+                if (card.Rank == Rank.Nine || card.Rank == Rank.Ten)
+                {
+                    ninesAndTensCount++;
+                }
+            }
+
+            return ninesAndTensCount > 2;
         }
     }
 }

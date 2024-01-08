@@ -1,5 +1,4 @@
-﻿using webapi.Domain.Game;
-using webapi.Domain.GameDetails;
+﻿using webapi.Domain.GameDetails;
 using webapi.Domain.Player;
 using webapi.Domain.PlayerDetails;
 

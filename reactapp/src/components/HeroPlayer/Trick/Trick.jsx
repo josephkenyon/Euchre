@@ -9,8 +9,10 @@ export default function Trick() {
     const rightOpponentCard = useSelector((state) => state.playerState.trickState.rightOpponentCard)
     const myCard = useSelector((state) => state.playerState.trickState.myCard)
 
+    const trumpCard = useSelector((state) => state.playerState.trumpCard)
+
     return (
-        <div className="vertical-div hundred-percent-div">
+        <div className="vertical-div hundred-percent-div">            
             <div className="top-trick-card-div">
                 <div className="trick-card-div">
                     {allyCard ? <Card suitIndex={allyCard.suit} rankIndex={allyCard.rank} small={true}/> : null}
@@ -26,6 +28,8 @@ export default function Trick() {
                     {rightOpponentCard ? <Card suitIndex={rightOpponentCard.suit} rankIndex={rightOpponentCard.rank} small={true}/> : null}
                 </div>
             </div>
+
+            {trumpCard ? <Card suitIndex={trumpCard.suit} rankIndex={trumpCard.rank} small={true}/> : null}
 
             <div className="bott-trick-card-div">
                 <div className="trick-card-div">

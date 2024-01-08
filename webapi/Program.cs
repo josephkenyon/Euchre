@@ -42,7 +42,7 @@ app.UseCors(x => x.AllowAnyMethod()
            .SetIsOriginAllowed(origin => true)
            .AllowCredentials());
 
-app.MapHub<GameHub>("/hub");
+app.MapHub<GameHub>("/euchre/hub");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

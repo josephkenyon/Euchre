@@ -12,7 +12,7 @@ namespace webapi.Domain.Game
         public string Name { get; set; }
 
         public Phase Phase { get; set; }
-        public Suit TrumpSuit { get; set; }
+        public Suit? TrumpSuit { get; set; }
 
         public int? IgnoredPlayerIndex { get; set; }
 
@@ -22,7 +22,6 @@ namespace webapi.Domain.Game
         public int PlayerTurnIndex { get; set; }
         public int StartingPlayerTurnIndex { get; set; }
         public int TookBidTeamIndex { get; set; }
-        public int CurrentBid { get; set; }
 
         public string TeamOneScoresString { get; set; }
         public string TeamTwoScoresString { get; set; }
@@ -75,6 +74,11 @@ namespace webapi.Domain.Game
             {
                 PlayerTurnIndex = 0;
             }
+
+            if (PlayerTurnIndex == IgnoredPlayerIndex)
+            {
+                IncrementPlayerTurnIndex();
+            }
         }
 
         public int GetTookBidTeamIndex()
@@ -87,17 +91,12 @@ namespace webapi.Domain.Game
             TookBidTeamIndex = index;
         }
 
-        public int GetCurrentBid()
-        {
-            return CurrentBid;
-        }
-
         public Phase GetPhase()
         {
             return Phase;
         }
 
-        public Suit GetTrumpSuit()
+        public Suit? GetTrumpSuit()
         {
             return TrumpSuit;
         }
@@ -111,12 +110,18 @@ namespace webapi.Domain.Game
         {
             KittyString = Utils.StringifyCards(kitty);
             TrumpCardString = Utils.StringifyCard(trumpCard);
+            TrumpSuit = trumpCard.Suit;
         }
 
-        public List<Card> GetAndThenClearKitty()
+        public List<Card> GetAndThenReplenishKitty(string replenishIds)
         {
             var cards = Utils.GetCardsFromString(KittyString);
-            KittyString = null;
+
+
+            var idStringList = replenishIds.Split(";").ToList();
+            var cardList = idStringList.Select(id => Utils.GetCardFromId(int.Parse(id)));
+
+            KittyString = Utils.StringifyCards(cardList.ToList());
 
             return cards;
         }
@@ -147,21 +152,21 @@ namespace webapi.Domain.Game
             Phase = (Phase)Enum.ToObject(typeof(Phase), phaseInt + 2);
         }
 
-        public void SetCurrentBid(int bid)
-        {
-            CurrentBid = bid;
-        }
-
         public void LonerCalled(int ignorePlayerIndex)
         {
             IgnoredPlayerIndex = ignorePlayerIndex;
         }
 
+        public int? GetIgnoredPlayerIndex()
+        {
+            return IgnoredPlayerIndex;
+        }
+
         public void FlipDealerCard()
         {
             TrumpCardString = null;
+            TrumpSuit = null;
         }
-
 
         public void StartNewRound()
         {
@@ -184,7 +189,6 @@ namespace webapi.Domain.Game
             }
 
             PlayerTurnIndex = StartingPlayerTurnIndex;
-            CurrentBid = 14;
             TeamOneCardsTakenIds = "";
             TeamTwoCardsTakenIds = "";
 
@@ -253,12 +257,12 @@ namespace webapi.Domain.Game
             return scoreTotal;
         }
 
-        public void AddRoundBidResult(Suit trumpSuit, int teamIndex, int bid)
+        public void AddRoundBidResult(Suit trumpSuit, int teamIndex)
         {
             var resultsList = RoundBidResults.Split(";").ToList();
             resultsList.RemoveAll(string.IsNullOrEmpty);
 
-            var result = $"{trumpSuit}:{teamIndex}:{bid}";
+            var result = $"{trumpSuit}:{teamIndex}";
 
             resultsList.Add(result);
 
@@ -277,7 +281,7 @@ namespace webapi.Domain.Game
                 var resultArray = result.Split(":").ToList();
                 _ = Enum.TryParse(resultArray[0], out Suit suit);
 
-                newList.Add(new RoundBidResult(suit, int.Parse(resultArray[1]), int.Parse(resultArray[2])));
+                newList.Add(new RoundBidResult(suit, int.Parse(resultArray[1])));
             }
 
             return newList;
@@ -299,16 +303,20 @@ namespace webapi.Domain.Game
             }
         }
 
-        public List<int> GetCardIds(int teamIndex)
+        public int GetTricksTaken(int teamIndex)
         {
-
             var newList = new List<int>();
 
             var ids = (teamIndex == 0 ? TeamOneCardsTakenIds.Split(";") : TeamTwoCardsTakenIds.Split(";")).ToList();
             ids.RemoveAll(string.IsNullOrEmpty);
-            newList.AddRange(ids.Select(id => int.Parse(id)));
+            newList.AddRange(ids.Select(int.Parse));
 
-            return newList;
+            return newList.Count / (IgnoredPlayerIndex == null ? 4 : 3);
+        }
+
+        public bool TeamWasAlone(int teamIndex)
+        {
+            return IgnoredPlayerIndex != null && Utils.GetTeamIndex((int) IgnoredPlayerIndex) == teamIndex;
         }
     }
 }
